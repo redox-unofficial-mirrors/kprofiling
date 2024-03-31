@@ -4,8 +4,11 @@ version = "0.1.0"
 edition = "2021"
 authors = ["4lDO2 <4lDO2@protonmail.com>"]
 license = "MIT"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+repository = "https://gitlab.redox-os.org/redox-os/kprofiling"
+description = "Conversion tool from Redox kernel profiling data into perf script."
+categories = ["development-tools::profiling", "command-line-utilities"]
+keywords = ["redox", "kernel", "profiling", "perf"]
+readme = "README.md"
 
 [dependencies]
 anyhow = "1"
