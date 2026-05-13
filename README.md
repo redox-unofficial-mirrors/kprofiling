@@ -21,4 +21,4 @@ cargo run -- /path/to/redoxfs/root/profiling.txt /path/to/ksym OPTIONS FREQ | in
 - Replace the `OPTIONS` part with a combination of `o`, `x`, and/or `i` (read the source code)
 - Replace the `FREQ` part with the CPU frequency measured in GHz (assumes `constant_tsc`, check `lscpu` on Linux)
 
-If you want more details about how to setup the profilling, read [this](https://doc.redox-os.org/book/ch09-10-performance.html#kernel-profiling) section.
+If you want more details about how to setup the profilling, read [this](https://doc.redox-os.org/book/performance.html#kernel) section.
