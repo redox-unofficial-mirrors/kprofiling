@@ -14,8 +14,8 @@ fn parse_symbols(path: &str) -> Result<Vec<(u64, u64, String)>> {
             };
 
             let mut components = line.splitn(4, ' ');
-            let addr = u64::from_str_radix(components.next().expect("malformed data"), 16)
-                .expect("malformed data");
+            let addr = u64::from_str_radix(components.next().expect("malformed data"), 16).ok()?;
+            //.expect("malformed data");
             let Ok(len) = u64::from_str_radix(components.next()?, 16) else {
                 eprintln!("skipping symbol line `{line}`");
                 return None;
@@ -110,12 +110,16 @@ fn main() -> Result<()> {
             .map(|c| u64::from_str_radix(c, 16).expect("malformed call stack"))
             .collect::<Vec<_>>();
 
-        let in_userspace = callstack.iter().any(|addr| addr & (1 << 63) == 0);
+        let from_userspace = callstack.get(0).is_some_and(|addr| addr & (1 << 63) == 0);
 
         let these_user_symbols = match all_user_symbols.get(context_str) {
             Some(syms) => syms,
             None => {
-                if !in_userspace {
+                if from_userspace && context_str == "[kmain]" {
+                    eprintln!("from userspace and kmain");
+                }
+                // TODO: find places where from_userspace && kmain...
+                if !from_userspace || context_str == "[kmain]" {
                     &Vec::new()
                 } else if opt_include_unspecified_contexts {
                     eprintln!("Context `{context_str}` has no symbols, keeping userspace sample");
@@ -127,11 +131,11 @@ fn main() -> Result<()> {
             }
         };
 
-        if !opt_include_nonkernel_chain && in_userspace {
+        if !opt_include_nonkernel_chain && from_userspace {
             continue;
         }
         // TODO: which one?
-        if true || in_userspace {
+        if opt_include_nonkernel_chain {
             println!("{context_str} {cpu} {secs}.{micros}:");
         } else {
             println!("kernel {cpu} {secs}.{micros}:");
@@ -139,6 +143,12 @@ fn main() -> Result<()> {
 
         for addr in callstack {
             let addr_is_userspace_not_kernel = addr & (1 << 63) == 0;
+
+            if !opt_include_nonkernel_chain && addr_is_userspace_not_kernel {
+                // just stop iterating when reaching a user-kernel boundary
+                break;
+            }
+
             let (symbols, environment) = if addr_is_userspace_not_kernel {
                 (these_user_symbols, context_str)
             } else {
@@ -160,7 +170,7 @@ fn main() -> Result<()> {
 
                 if opt_expand_offset_from_sym && off != 0 {
                     println!("\t{addr:x} [{symbol_name}+{off}] ({environment})");
-                    println!("\t{symbol_addr:x} [{symbol_name}] ([kernel])");
+                    println!("\t{symbol_addr:x} [{symbol_name}] ({environment})");
                 } else if opt_show_offset_from_sym {
                     println!("\t{addr:x} [{symbol_name}+{off}] ({environment})");
                 } else {
