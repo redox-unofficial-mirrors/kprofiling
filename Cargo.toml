@@ -1,6 +1,6 @@
 [package]
 name = "redox-kprofiling"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["4lDO2 <4lDO2@protonmail.com>"]
 license = "MIT"
