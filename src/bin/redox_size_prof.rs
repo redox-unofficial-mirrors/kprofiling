@@ -1,6 +1,6 @@
+use anyhow::{Context, Result};
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, BufWriter, Write};
-use anyhow::{Context, Result};
 
 #[derive(Clone, Debug, Default)]
 struct Tree {
@@ -32,7 +32,11 @@ impl Tree {
             } else {
                 //child.write(&format!("{prefix};[{prefix}::{name}]"), output)?;
                 let next_path_prefix = format!("{path_prefix}::{name}");
-                child.write(&format!("{prefix};[{next_path_prefix}]"), &next_path_prefix, output)?;
+                child.write(
+                    &format!("{prefix};[{next_path_prefix}]"),
+                    &next_path_prefix,
+                    output,
+                )?;
             }
         }
 
@@ -46,8 +50,14 @@ struct Options {
 
 fn parse(tree: &mut Tree, line: &str, opts: &Options) -> Result<()> {
     let mut components = line.splitn(4, ' ');
-    let _start = components.next().and_then(|n| u64::from_str_radix(n, 16).ok()).context("no start")?;
-    let length = components.next().and_then(|n| u64::from_str_radix(n, 16).ok()).context("no length")?;
+    let _start = components
+        .next()
+        .and_then(|n| u64::from_str_radix(n, 16).ok())
+        .context("no start")?;
+    let length = components
+        .next()
+        .and_then(|n| u64::from_str_radix(n, 16).ok())
+        .context("no length")?;
     let kind = components.next().context("no type")?;
 
     if !opts.include_nontext && !matches!(kind, "t" | "T") {
@@ -55,7 +65,10 @@ fn parse(tree: &mut Tree, line: &str, opts: &Options) -> Result<()> {
     }
 
     let name = components.next().context("no name")?;
-    let tokens = name.parse::<proc_macro2::TokenStream>().ok().context("failed to parse name")?;
+    let tokens = name
+        .parse::<proc_macro2::TokenStream>()
+        .ok()
+        .context("failed to parse name")?;
     // TODO: parsing is very limited, for example unaware of generics and potentially deeper qself
     // patterns
     let syn::ExprPath { qself, path, .. } = syn::parse2::<syn::ExprPath>(tokens)?;
@@ -63,12 +76,17 @@ fn parse(tree: &mut Tree, line: &str, opts: &Options) -> Result<()> {
     //eprintln!("QSELF {qself:?} PATH {path:?}");
     let mut segs = Vec::new();
 
-    if let Some(qs) = qself && let syn::Type::Path(syn::TypePath { path, .. }) = *qs.ty {
+    if let Some(qs) = qself
+        && let syn::Type::Path(syn::TypePath { path, .. }) = *qs.ty
+    {
         segs.extend(path.segments.iter().map(|s| s.ident.to_string()));
     }
     segs.extend(path.segments.iter().map(|s| s.ident.to_string()));
 
-    if opts.include_nontext && !matches!(kind, "t" | "T") && let Some(last) = segs.last_mut() {
+    if opts.include_nontext
+        && !matches!(kind, "t" | "T")
+        && let Some(last) = segs.last_mut()
+    {
         last.push_str(&format!("@{kind}"));
     }
 
@@ -78,8 +96,12 @@ fn parse(tree: &mut Tree, line: &str, opts: &Options) -> Result<()> {
 }
 
 fn main() -> Result<()> {
-    if let Some(arg) = std::env::args().nth(1) && matches!(&*arg, "-h" | "--help") {
-        eprintln!("Usage:\n\tnm -CS /path/to/kernel | redox_sizeprof | inferno-flamegraph >/path/to/flamegraph.svg");
+    if let Some(arg) = std::env::args().nth(1)
+        && matches!(&*arg, "-h" | "--help")
+    {
+        eprintln!(
+            "Usage:\n\tnm -CS /path/to/kernel | redox_sizeprof | inferno-flamegraph >/path/to/flamegraph.svg"
+        );
         return Ok(());
     }
 
@@ -103,6 +125,7 @@ fn main() -> Result<()> {
     //std::fs::write("tree-dbg.txt", format!("{tree:?}")).unwrap();
 
     let mut output = BufWriter::new(std::io::stdout());
-    tree.write("", "", &mut output).context("failed to write output")?;
+    tree.write("", "", &mut output)
+        .context("failed to write output")?;
     Ok(())
 }

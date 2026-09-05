@@ -169,10 +169,10 @@ fn main() -> Result<()> {
                 }
 
                 if opt_expand_offset_from_sym && off != 0 {
-                    println!("\t{addr:x} [{symbol_name}+{off}] ({environment})");
+                    println!("\t{addr:x} [{symbol_name}+{off:#0x}] ({environment})");
                     println!("\t{symbol_addr:x} [{symbol_name}] ({environment})");
                 } else if opt_show_offset_from_sym {
-                    println!("\t{addr:x} [{symbol_name}+{off}] ({environment})");
+                    println!("\t{addr:x} [{symbol_name}+{off:#0x}] ({environment})");
                 } else {
                     println!("\t{addr:x} [{symbol_name}] ({environment})");
                 }
